@@ -1,6 +1,6 @@
 from app import App
 from app_components.dialog import KEYBOARD_BUTTONS
-from events.input import Buttons, ButtonDownEvent, ButtonUpEvent
+from events.input import Button, Buttons, ButtonDownEvent, ButtonUpEvent
 from system.eventbus import eventbus
 import neopixel
 from tildagonos import tildagonos
@@ -9,6 +9,14 @@ import asyncio
 
 # Based on https://gitlab.com/why2025/team-badge/firmware/-/blob/main/badgevms/drivers/tca8418.c
 KEYCODES = [ "NOTHING", "ESCAPE", "SQUARE", "TRIANGLE", "CROSS", "CIRCLE", "CLOUD", "DIAMOND", "BACKSPACE", "0", "-", "`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "FN", "A", "S", "D", "F", "G", "H", "J", "K", "L", "SHIFT", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "LEFT", "DOWN", "RIGHT", "/", "UP", "SHIFT", ";", "'", "ENTER", "=", "LCTRL", "SOLDERPARTY", "ALT", "\\", "SPACE", "SPACE", "SPACE", "ALT", "P", "[", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "]", ]  # fmt: skip
+
+# Keys the firmware's KEYBOARD_BUTTONS has no entry for, so they were dropped.
+# LCTRL is sent as its own key with CTRL as its parent, so apps asking for
+# either name get it (as Keyboard.UP counts as System.UP); TAB as a plain key.
+EXTRA_BUTTONS = {
+    "TAB": Button("TAB", "Keyboard"),
+    "LCTRL": Button("LCTRL", "Keyboard", KEYBOARD_BUTTONS.get("CTRL")),
+}
 
 SHIFTED_KEY_MAP = {
     "1": "!",
@@ -151,7 +159,7 @@ class KeyboardApp(App):
             button_keycode = keycode
             if self.shifted:
                 button_keycode = SHIFTED_KEY_MAP.get(button_keycode) or button_keycode
-            button = KEYBOARD_BUTTONS.get(button_keycode)
+            button = KEYBOARD_BUTTONS.get(button_keycode) or EXTRA_BUTTONS.get(button_keycode)
             if button:
                 if pressed:
                     if self.shifted and button_keycode == keycode:
